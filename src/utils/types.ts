@@ -1,3 +1,6 @@
-export enum Routes {
-  AUTH = 'auth',
-}
+export type CreateUserDetails = {
+  email: string;
+  firstname: string;
+  lastname: string;
+  password: string;
+};
