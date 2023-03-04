@@ -27,4 +27,14 @@ export class UsersService {
     const { password, ...result } = newUser;
     return result;
   }
+
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user)
+      throw new HttpException(
+        'No user found with that email',
+        HttpStatus.BAD_REQUEST,
+      );
+    return user;
+  }
 }
