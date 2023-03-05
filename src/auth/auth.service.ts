@@ -3,6 +3,7 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,10 @@ export class AuthService {
     return user;
   }
 
-  async generateToken(id: number, email: string) {
+  async generateToken(
+    id: number,
+    email: string,
+  ): Promise<{ access_token: string }> {
     const payload = {
       sub: id,
       email,
@@ -36,5 +40,13 @@ export class AuthService {
     });
 
     return { access_token };
+  }
+
+  async verifyUser(token: string): Promise<User> {
+    const decoded = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
+    if (!decoded) throw new Error('wrong token');
+    return this.userService.findByEmail(decoded.email);
   }
 }
