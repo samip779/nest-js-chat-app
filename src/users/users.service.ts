@@ -17,15 +17,15 @@ export class UsersService {
     });
     if (userExists)
       throw new HttpException('User Already Exists', HttpStatus.CONFLICT);
-    const hpassword = await hashPassword(userDetails.password);
+    const password = await hashPassword(userDetails.password);
     const newUser = this.userRepository.create({
       ...userDetails,
-      password: hpassword,
+      password,
     });
     await this.userRepository.save(newUser);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = newUser;
-    return result;
+    delete newUser.password;
+    return newUser;
   }
 
   async findByEmail(email: string): Promise<User> {
