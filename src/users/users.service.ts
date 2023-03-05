@@ -35,6 +35,7 @@ export class UsersService {
         'No user found with that email',
         HttpStatus.BAD_REQUEST,
       );
+
     return user;
   }
 }
