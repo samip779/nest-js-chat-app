@@ -35,7 +35,12 @@ export class UsersService {
         'No user found with that email',
         HttpStatus.BAD_REQUEST,
       );
-
     return user;
+  }
+
+  async userExists(id: number): Promise<boolean> {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) return false;
+    return true;
   }
 }
