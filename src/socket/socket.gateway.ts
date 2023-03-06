@@ -22,7 +22,6 @@ export class SocketGateway
   constructor(private readonly authService: AuthService) {}
 
   @WebSocketServer() io: Server;
-  onlineUsers = new Map<number, string>();
 
   afterInit(): void {
     this.logger.log('Web socket gateway initialized');
@@ -41,8 +40,7 @@ export class SocketGateway
 
       client.data = { userId: user.id };
 
-      // set the user to online users
-      this.onlineUsers.set(user.id, client.id);
+      client.join(client.data.userId.toString());
     } catch (e) {
       throw new WsException(e.message);
     }
@@ -50,20 +48,12 @@ export class SocketGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`ws client with id ${client.id} is disconnected`);
-
-    // remove user from online users
-    this.onlineUsers.delete(client.data.userId);
   }
 
   @SubscribeMessage('msg-send')
   handleMessage(client: Socket, data: { to: number; text: string }) {
-    const sendUserSocket = this.onlineUsers.get(data.to);
-
-    //  if user is online then send message directly
-    if (sendUserSocket) {
-      client
-        .to(sendUserSocket)
-        .emit('msg-receive', { from: client.data.userId, text: data.text });
-    }
+    client
+      .to(data.to.toString())
+      .emit('msg-receive', { from: client.data.userId, text: data.text });
   }
 }
