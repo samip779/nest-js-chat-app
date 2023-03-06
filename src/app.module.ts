@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfigAsync } from './config/typeorm.config';
 import { SocketModule } from './socket/socket.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { SocketModule } from './socket/socket.module';
     AuthModule,
     UsersModule,
     SocketModule,
+    MessagesModule,
   ],
   controllers: [],
   providers: [],

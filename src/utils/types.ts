@@ -4,3 +4,9 @@ export type CreateUserDetails = {
   lastname: string;
   password: string;
 };
+
+export type CreateMessageDetails = {
+  sender_id: number;
+  receiver_id: number;
+  text: string;
+};

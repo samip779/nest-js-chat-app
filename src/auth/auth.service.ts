@@ -45,6 +45,7 @@ export class AuthService {
   async verifyUser(token: string): Promise<User> {
     const decoded = await this.jwtService.verifyAsync(token, {
       secret: this.configService.get('JWT_SECRET'),
+      ignoreExpiration: true,
     });
     if (!decoded) throw new Error('wrong token');
     return this.userService.findByEmail(decoded.email);
