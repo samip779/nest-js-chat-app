@@ -1,51 +1,66 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import {
-  MessageBody,
-  SubscribeMessage,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
+  SubscribeMessage,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import { AuthService } from 'src/auth/auth.service';
-
-type AuthPayload = {
-  user: any;
-};
-
-export type ServerWithAuth = Server & AuthPayload;
+import { User } from 'src/users/entities/user.entity';
 
 @WebSocketGateway()
-export class SocketGateway implements OnModuleInit {
+export class SocketGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  private readonly logger = new Logger(SocketGateway.name);
   constructor(private readonly authService: AuthService) {}
-  @WebSocketServer()
-  server: ServerWithAuth;
 
-  onModuleInit() {
-    this.server.on('connection', async (socket) => {
-      console.log(socket.id);
-      try {
-        const token = socket.handshake.headers.authorization;
-        if (!token) {
-          socket.disconnect();
-        }
-        const extractedToken = token.split(' ')[1];
+  @WebSocketServer() io: Server;
+  onlineUsers = new Map<number, string>();
 
-        const user = await this.authService.verifyUser(extractedToken);
-
-        if (!user) socket.disconnect();
-        delete user.password;
-        this.server.user = user;
-      } catch (e) {
-        console.log(e.message);
-        socket.disconnect();
-      }
-    });
+  afterInit(): void {
+    this.logger.log('Web socket gateway initialized');
   }
 
-  @SubscribeMessage('message')
-  handleMessage(@MessageBody() body: any) {
-    this.server.emit('onMessage', this.server.user.email);
+  async handleConnection(client: Socket) {
+    this.logger.log(`ws client with id ${client.id} is connected`);
+    try {
+      // Extract token from header
+      const token = client.handshake.headers.authorization.split(' ')[1];
+
+      // Verify and get the user from auth service
+      const user: User = await this.authService.verifyUser(token);
+
+      if (!user) throw new WsException('No user with that token');
+
+      client.data = { userId: user.id };
+
+      // set the user to online users
+      this.onlineUsers.set(user.id, client.id);
+    } catch (e) {
+      throw new WsException(e.message);
+    }
+  }
+
+  handleDisconnect(client: Socket) {
+    this.logger.log(`ws client with id ${client.id} is disconnected`);
+
+    // remove user from online users
+    this.onlineUsers.delete(client.data.userId);
+  }
+
+  @SubscribeMessage('msg-send')
+  handleMessage(client: Socket, data: { to: number; text: string }) {
+    const sendUserSocket = this.onlineUsers.get(data.to);
+
+    if (sendUserSocket) {
+      client.to(sendUserSocket).emit('msg-receive', data.text);
+    }
   }
 }
