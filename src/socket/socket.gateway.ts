@@ -59,8 +59,11 @@ export class SocketGateway
   handleMessage(client: Socket, data: { to: number; text: string }) {
     const sendUserSocket = this.onlineUsers.get(data.to);
 
+    //  if user is online then send message directly
     if (sendUserSocket) {
-      client.to(sendUserSocket).emit('msg-receive', data.text);
+      client
+        .to(sendUserSocket)
+        .emit('msg-receive', { from: client.data.userId, text: data.text });
     }
   }
 }
