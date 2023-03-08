@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfigAsync } from './config/typeorm.config';
 import { SocketModule } from './socket/socket.module';
 import { MessagesModule } from './messages/messages.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { MessagesModule } from './messages/messages.module';
     UsersModule,
     SocketModule,
     MessagesModule,
+    FilesModule,
   ],
   controllers: [],
   providers: [],
