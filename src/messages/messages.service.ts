@@ -46,9 +46,6 @@ export class MessagesService {
       .take(take)
       .getManyAndCount();
 
-    if (data[0].length === 0)
-      throw new HttpException('Page number exceeded', HttpStatus.BAD_REQUEST);
-
     return paginatedResponse(data, page, take);
   }
 }

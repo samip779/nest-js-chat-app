@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import {
   OnGatewayInit,
@@ -15,6 +15,8 @@ import { AuthService } from 'src/auth/auth.service';
 import { MessagesService } from 'src/messages/messages.service';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { ClientMessageDto } from './dto/client-message.dto';
+import { WsCatchAllFilter } from 'src/exceptions/web-socket.exception.filter';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -55,9 +57,13 @@ export class SocketGateway
   handleDisconnect(client: Socket) {
     this.logger.log(`ws client with id ${client.id} is disconnected`);
   }
-
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @UseFilters(new WsCatchAllFilter())
   @SubscribeMessage('msg-send')
-  async handleMessage(client: Socket, data: { to: number; text: string }) {
+  async handleMessage(client: Socket, data: ClientMessageDto) {
+    // if (!data.to || !data.text)
+    //   throw new WsException('incorrect message format');
+
     if (data.to === client.data.userId)
       throw new WsException(
         'You cannot send and receive message from the same id',
