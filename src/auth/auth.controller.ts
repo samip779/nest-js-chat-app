@@ -8,8 +8,10 @@ import { GetUser } from './decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { LocalGuard } from './guards/local.guard';
 import { JwtGuard } from './guards/jwt.guard';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller(Routes.AUTH)
+@ApiTags('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,

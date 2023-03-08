@@ -4,6 +4,7 @@ import { Message } from './entities/message.entity';
 import { Repository } from 'typeorm';
 import { CreateMessageDetails } from 'src/utils/types';
 import { User } from 'src/users/entities/user.entity';
+import { paginatedResponse } from 'src/utils/typeorm/paginator';
 
 @Injectable()
 export class MessagesService {
@@ -22,13 +23,26 @@ export class MessagesService {
     }
   }
 
-  async getMessages(user: User, id: number) {
-    return await this.messageRepository
+  async getMessages(
+    user: User,
+    id: number,
+    query: { page: number; limit: number },
+  ) {
+    const take = query.limit > 50 ? 50 : query.limit;
+    const page = query.page || 1;
+    const skip = (page - 1) * take;
+
+    const data = await this.messageRepository
       .createQueryBuilder('message')
       .where('message.sender_id = :id1', { id1: id })
       .andWhere('message.receiver_id = :id2', { id2: user.id })
       .orWhere('message.sender_id = :id3', { id3: user.id })
       .andWhere('message.receiver_id = :id4', { id4: id })
-      .getMany();
+      .orderBy('created_at', 'DESC')
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
+
+    return paginatedResponse(data, page, take);
   }
 }
