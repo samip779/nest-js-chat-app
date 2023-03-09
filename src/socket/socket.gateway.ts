@@ -17,9 +17,9 @@ import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { ClientMessageDto } from './dto/client-message.dto';
 import { WsCatchAllFilter } from 'src/exceptions/web-socket.exception.filter';
-import { FilesService } from 'src/files/files.service';
+import { SocketService } from './socket.service';
 
-@WebSocketGateway()
+@WebSocketGateway({ namespace: 'chat' })
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -28,13 +28,13 @@ export class SocketGateway
     private readonly authService: AuthService,
     private readonly userService: UsersService,
     private readonly messageService: MessagesService,
-    private readonly fileService: FilesService,
+    private readonly socketService: SocketService,
   ) {}
 
   @WebSocketServer() io: Server;
 
   afterInit(server: Server): void {
-    this.fileService.server = server;
+    this.socketService.chat = server;
     this.logger.log('Web socket gateway initialized');
   }
 
@@ -64,9 +64,6 @@ export class SocketGateway
   @UseFilters(new WsCatchAllFilter())
   @SubscribeMessage('msg-send')
   async handleMessage(client: Socket, data: ClientMessageDto) {
-    // if (!data.to || !data.text)
-    //   throw new WsException('incorrect message format');
-
     if (data.to === client.data.userId)
       throw new WsException(
         'You cannot send and receive message from the same id',

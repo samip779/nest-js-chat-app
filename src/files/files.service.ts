@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Server } from 'socket.io';
+
 import { MessagesService } from 'src/messages/messages.service';
+import { SocketService } from 'src/socket/socket.service';
 
 @Injectable()
 export class FilesService {
-  public server: Server;
-
-  constructor(private readonly messageService: MessagesService) {}
+  constructor(
+    private readonly messageService: MessagesService,
+    private readonly socketService: SocketService,
+  ) {}
 
   async uploadFile(file: Express.Multer.File, from: number, to: number) {
     const response = {
@@ -19,9 +21,9 @@ export class FilesService {
       text: response.filepath,
     });
 
-    this.server
+    this.socketService.chat
       .to([to.toString(), from.toString()])
-      .emit('msg-receive', response);
+      .emit('msg-receive', response, from);
     return { message: 'file sent successfully' };
   }
 }
