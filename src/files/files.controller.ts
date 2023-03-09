@@ -1,17 +1,29 @@
 import {
   Controller,
+  Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
+  Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { FilesService } from './files.service';
+import { Response } from 'express';
+import { JwtGuard } from 'src/auth/guards/jwt.guard';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/users/entities/user.entity';
 
 @Controller('files')
 export class FilesController {
-  @Post('upload')
+  constructor(private readonly filesService: FilesService) {}
+
+  @UseGuards(JwtGuard)
+  @Post('upload/:to')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -26,13 +38,19 @@ export class FilesController {
       }),
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('to') to: number,
+    @GetUser() user: User,
+  ) {
     if (!file)
       throw new HttpException('Something wrong', HttpStatus.BAD_REQUEST);
-    console.log(file);
 
-    return {
-      filepath: `http://localhost/3001/files/${file.filename}`,
-    };
+    return this.filesService.uploadFile(file, user.id, to);
+  }
+
+  @Get(':filename')
+  async getFile(@Param('filename') filename: string, @Res() res: Response) {
+    res.sendFile(filename, { root: './uploads' });
   }
 }

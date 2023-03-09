@@ -17,6 +17,7 @@ import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { ClientMessageDto } from './dto/client-message.dto';
 import { WsCatchAllFilter } from 'src/exceptions/web-socket.exception.filter';
+import { FilesService } from 'src/files/files.service';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -27,11 +28,13 @@ export class SocketGateway
     private readonly authService: AuthService,
     private readonly userService: UsersService,
     private readonly messageService: MessagesService,
+    private readonly fileService: FilesService,
   ) {}
 
   @WebSocketServer() io: Server;
 
-  afterInit(): void {
+  afterInit(server: Server): void {
+    this.fileService.server = server;
     this.logger.log('Web socket gateway initialized');
   }
 
